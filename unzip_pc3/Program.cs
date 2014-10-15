@@ -40,11 +40,18 @@ namespace unzip_pc3
                                     //тут текстово содержание файла
                                     string s = sr.ReadToEnd();
 
-                                    using (StreamWriter fs_out = File.CreateText(fileName + ".txt"))
+                                    using (FileStream fs_out = File.Open(fileName + ".txt", FileMode.Create, FileAccess.ReadWrite))
                                     {
-                                        fs_out.WriteLine(s);
-
+                                       
+                                        fs_out.Write(Encoding.ASCII.GetBytes(s), 0, Encoding.ASCII.GetBytes(s).Length);
                                     }
+
+                                    //using (StreamWriter fs_out = File.CreateText(fileName + ".txt"))
+                                    //{
+                                       
+                                    //    fs_out.WriteLine(s);
+
+                                    //}
                                 }
                             }
                         }

@@ -21,6 +21,7 @@ namespace unzip_pc3
         {
             //' на основе вот этого топака : http://www.theswamp.org/index.php?topic=41529.0
 
+
             if(args.Length == 2){
                 // тут распаковываем архивчик
                 if (args[0] == "e")
@@ -43,7 +44,7 @@ namespace unzip_pc3
                                     using (FileStream fs_out = File.Open(fileName + ".txt", FileMode.Create, FileAccess.ReadWrite))
                                     {
                                        
-                                        fs_out.Write(Encoding.ASCII.GetBytes(s), 0, Encoding.ASCII.GetBytes(s).Length);
+                                        fs_out.Write(Encoding.Default.GetBytes(s), 0, Encoding.Default.GetBytes(s).Length);
                                     }
 
                                     //using (StreamWriter fs_out = File.CreateText(fileName + ".txt"))
@@ -69,24 +70,42 @@ namespace unzip_pc3
                             using (StreamReader sr = new StreamReader(fs))
                             {
                                 String pref_s = "PIAFILEVERSION_2.0,PC3VER1,compress\r\npmzlibcodec";
-                                
-                                //Byte[] pref_byte = { 255,255,255,255,255,255,255,000,255,255,255,000 };
-                                //Byte[] pref_byte = { 157, 94, 173, 006, 215, 016, 000, 000, 199, 004, 000, 000 };
-                                // Эти данные(байты) должны вычеслятся
-                                Byte[] pref_byte = { 157, 94, 173, 006, 215, 016, 000, 000, 199, 004, 000, 000 };
 
-                                pref_s = pref_s + Encoding.Default.GetString(pref_byte);
+                                /*
+                                is a good starting point, but contains several errors/lack of information
+                                The header size is 60 No 59
+                                bytes 49->52 = ZlibCodec.Adler32
+                                bytes 53->56 = decompresse stream size
+                                bytes 57->60 = compressed stream size
+                                Эти данные(байты) должны вычеслятся
+                                */
+                                Byte[] ZlibCodec_Adler32 = { 157, 94, 173, 006 };
+
+                                long decompresse_stream_size = fs.Length;
+                                long compressed_stream_size = fs.Length;
+                                
 
                                 String s = sr.ReadToEnd();
                                                                
 
                                 using (FileStream fs_out = File.Open(fileName + ".pc3", FileMode.Create, FileAccess.ReadWrite))
                                 {
+                                    
+                                    
                                     using (ZlibStream zs = new ZlibStream(fs_out, CompressionMode.Compress,
                                                                              CompressionLevel.BestCompression, false))
                                     {
+
+                                        // тут надо получить размер запакованных данных и сохранить в compressed_stream_size
+                                        //но как это сделать пока не знаю
+
                                         fs_out.Write(Encoding.Default.GetBytes(pref_s), 0, Encoding.Default.GetBytes(pref_s).Length);
+                                        fs_out.Write(ZlibCodec_Adler32, 0, 4);
+                                        fs_out.Write(BitConverter.GetBytes(decompresse_stream_size), 0, 4);
+                                        fs_out.Write(BitConverter.GetBytes(compressed_stream_size), 0, 4);
+
                                         zs.Write(Encoding.Default.GetBytes(s), 0, Encoding.Default.GetBytes(s).Length);
+                                        
                                     }
                                 }
                             }
